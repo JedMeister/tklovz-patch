@@ -1,0 +1,4 @@
+for FILE in /usr/lib/inithooks/firstboot.d.orig/*
+do
+$FILE
+done

@@ -1,7 +1,7 @@
 TKLOVZ
 ======
 
-This patch will prepare a turnkeylinux lucid filesystem to work as an ovz template. It only handles the convertion of the filesystem, so the recomended way of using it is through the TurnkeyLinux Development Environment, using the main tkliso2ovz script. For more information, ask in the [TurnkeyLinux Forums](http://www.turnkeylinux.org/forum)
+This patch will prepare a turnkeylinux Lucid filesystem to work as an ovz template. It only handles the convertion of the filesystem, so the recomended way of using it is through the TurnkeyLinux Development Environment, using the main tkliso2ovz script. For more information, ask in the [TurnkeyLinux Forums](http://www.turnkeylinux.org/forum)
 
 You must note that when using openVZ templates:
 
