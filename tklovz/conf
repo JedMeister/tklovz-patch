@@ -6,6 +6,9 @@
 # replace rsyslog with syslog-ng (for performance)
 apt-get remove --purge -y rsyslog
 
+# remove other unrequired packages
+apt-get remove --purge -y libparted0debian1 di-live grub-pc grub-common hdparm acpid lvm2 webmin-lvm webmin-fdisk webmin-raid casper
+
 # remove unrequired init scripts
 cd /etc/init
 rm -f console* control* hwclock* module* mount* network-interface* plymouth* procps* tty* udev* upstart* 
@@ -15,12 +18,29 @@ apt-get update
 apt-get install --force-yes -y gpgv
 apt-get install -y quota syslog-ng 
 
+#Stop syslog-ng service (started when installed)
 service syslog-ng stop
+
+# set some packages to manual install (so they aren't removed by apt-get autoremove). Not sure if they're all needed but they're only small
+apt-get install whiptail watershed libdevmapper-event1.02.1 libdebconfclient0 libdebian-installer4 
+
+# Disable confconsole - OVZ doesn't have a proper console
+update-rc.d confconsole disable
 
 # Hold mountall upstart
 echo "mountall hold" | dpkg --set-selections
 echo "upstart hold" | dpkg --set-selections
 echo "ifupdown hold" | dpkg --set-selections
+
+# Hold kernel metapackage
+echo "linux-image-generic hold" | dpkg --set-selections
+
+# Remove stuff not required
+rm -r /boot/*
+rm -r /lib/firmware/*
+rm -r /lib/modules/*
+rm /initrd.img
+rm /vmlinuz
 
 #Fix modprobe
 rm /sbin/modprobe
@@ -29,21 +49,29 @@ ln -s /bin/true /sbin/modprobe
 #Fix ssh
 sed -i -e 's_oom never_#oom never_g' /etc/init/ssh.conf
 
-# clean your packages
+# Clean packages
 apt-get clean
 apt-get autoremove
 
-#Generate a unique set of ssh (host) keys.
-rm -f /etc/ssh/ssh_host_*
+# Remove package lists (regenerated with apt-get update)
+rm /var/cache/apt/srcpkgcache.bin
+rm /var/cache/apt/pkgcache.bin
 
-cat << EOF > /etc/rc2.d/S15ssh_gen_host_keys
-#!/bin/sh
-ssh-keygen -f /etc/ssh/ssh_host_rsa_key -t rsa -N ''
-ssh-keygen -f /etc/ssh/ssh_host_dsa_key -t dsa -N ''
-rm -f \$0
-EOF
-
-chmod a+x /etc/rc2.d/S15ssh_gen_host_keys
+# As of v11.2-1 OVZ templates use a subset of the default TKL firstboot scripts for all appliances
+# The remaining firstboot inithooks are executed with the command 'init-ovz'
+# Move the default firstboot script out and the new defaults in and executed by 'init-ovz'
+cd /usr/lib/inithooks/
+mv firstboot.d firstboot.d.orig
+mv firstboot.d.new firstboot.d
+# Remove first boot scripts that are only needed on first boot (supplied by firstboot.d.new) & set root pass (not needed at all in OVZ container)
+cd firstboot.d.orig
+rm 10randomize-cronapt
+rm 10regen-sshkeys
+rm 15regen-sslcert
+rm 30rootpass
+rm 50auto-apt-archive
+rm 90delconf
+rm 92etckeeper
 
 # disable some unnecessary boot scripts
 update-rc.d -f ondemand remove
