@@ -51,7 +51,7 @@ sed -i -e 's_oom never_#oom never_g' /etc/init/ssh.conf
 
 # Clean packages
 apt-get clean
-apt-get autoremove
+#apt-get autoremove
 
 # Remove package lists (regenerated with apt-get update)
 rm /var/cache/apt/srcpkgcache.bin
@@ -59,19 +59,18 @@ rm /var/cache/apt/pkgcache.bin
 
 # As of v11.2-1 OVZ templates use a subset of the default TKL firstboot scripts for all appliances
 # The remaining firstboot inithooks are executed with the command 'init-ovz'
-# Move the default firstboot script out and the new defaults in and executed by 'init-ovz'
+# Move the default firstboot scripts, recreate firstboot.d, move back non-interactive scripts (& set root pass - not needed at all in OVZ container)
 cd /usr/lib/inithooks/
 mv firstboot.d firstboot.d.orig
-mv firstboot.d.new firstboot.d
-# Remove first boot scripts that are only needed on first boot (supplied by firstboot.d.new) & set root pass (not needed at all in OVZ container)
-cd firstboot.d.orig
-rm 10randomize-cronapt
-rm 10regen-sshkeys
-rm 15regen-sslcert
-rm 30rootpass
-rm 50auto-apt-archive
-rm 90delconf
-rm 92etckeeper
+mkdir firstboot.d
+cp firstboot.d.orig/.anchor firstboot.d/
+mv firstboot.d.orig/10randomize-cronapt firstboot.d/
+mv firstboot.d.orig/10regen-sshkeys firstboot.d/
+mv firstboot.d.orig/15regen-sslcert firstboot.d/
+rm firstboot.d.orig/30rootpass
+mv firstboot.d.orig/50auto-apt-archive firstboot.d/
+mv firstboot.d.orig/90delconf firstboot.d/
+mv firstboot.d.orig/92etckeeper firstboot.d/
 
 # disable some unnecessary boot scripts
 update-rc.d -f ondemand remove
